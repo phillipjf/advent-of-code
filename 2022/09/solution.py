@@ -3,8 +3,7 @@ from operator import iadd, isub
 
 
 def update_tail(h_curr_pos: List[int], t_curr_pos: List[int]) -> List[int]:
-    t_new_pos: List[int] = []
-    safe = [
+    safe: List[List[int, int]] = [
         [0, 0],
         [0, 1],
         [0, -1],
@@ -15,59 +14,32 @@ def update_tail(h_curr_pos: List[int], t_curr_pos: List[int]) -> List[int]:
         [1, -1],
         [-1, -1],
     ]
-    delta: List[int] = [h_curr_pos[0] - t_curr_pos[0], h_curr_pos[1] - t_curr_pos[1]]
+    delta: List[int] = [abs(h_curr_pos[0] - t_curr_pos[0]),
+                        abs(h_curr_pos[1] - t_curr_pos[1])]
+
     if delta in safe:
         return t_curr_pos
-    elif 0 in delta:
-        # if one delta is 0 and other is [2,-2], moving UDLR
-        # make value [2,-2] [1,-1]
-        if delta[0] in [2, -2]:
-            if delta[0] > 0:
-                delta[0] -= 1
-            else:
-                delta[0] += 1
-            t_new_pos = [h_curr_pos[0] - delta[0], h_curr_pos[1] - delta[1]]
-        elif delta[1] in [2, -2]:
-            if delta[1] > 0:
-                delta[1] -= 1
-            else:
-                delta[1] += 1
-            t_new_pos = [h_curr_pos[0] - delta[0], h_curr_pos[1] - delta[1]]
-        # if one delta is 0 and other is [1,-1], no move diagonal
-        elif delta[0] in [1, -1] or delta[1] in [1, -1]:
-            t_new_pos = t_curr_pos
+    if delta[0] > 1:
+        if h_curr_pos[0] > t_curr_pos[0]:
+            t_curr_pos[0] += 1
         else:
-            t_new_pos = t_curr_pos
-
-    # if one delta is [1,-1] and other is [2,-2], move diagonal
-    elif (delta[0] in [1, -1] and delta[1] in [2, -2]) or (
-        delta[0] in [2, -2] and delta[1] in [1, -1]
-    ):
-        if delta[0] > 0:
-            delta[0] -= 1
+            t_curr_pos[0] -= 1
+    if delta[1] > 1:
+        if h_curr_pos[1] > t_curr_pos[1]:
+            t_curr_pos[1] += 1
         else:
-            delta[0] += 1
-        if delta[1] > 0:
-            delta[1] -= 1
-        else:
-            delta[1] += 1
-        t_new_pos = [h_curr_pos[0] - delta[0], h_curr_pos[1] - delta[1]]
-
-    else:
-        raise Exception(f"Bad spot {delta}")
-    return t_new_pos
+            t_curr_pos[1] -= 1
+    if delta[1] > delta[0]:
+        t_curr_pos[0] = h_curr_pos[0]
+    if delta[0] > delta[1]:
+        t_curr_pos[1] = h_curr_pos[1]
+    return [t_curr_pos[0], t_curr_pos[1]]
 
 
-if __name__ == "__main__":
-    with open("input") as f:
-        inf = f.read()
-
-    moves = inf.split("\n")
-
-    h_coords: List[Tuple[int, int]] = [(0, 0)]
+def move(moves: List[str], rope_length: int) -> int:
+    rope: List[List[int, int]] = [[0, 0] for _ in range(rope_length)]
     t_coords: List[Tuple[int, int]] = [(0, 0)]
     h_curr_pos: List[int] = [0, 0]
-    t_curr_pos: List[int] = [0, 0]
 
     move_map: Dict[str, Dict[str, Any]] = {
         "U": {"op": iadd, "ind": 1},
@@ -84,16 +56,21 @@ if __name__ == "__main__":
         for i in range(step):
             ind: int = move_map[dir]["ind"]
             op: Callable = move_map[dir]["op"]
+            h_curr_pos = rope[0]
             h_curr_pos[ind] = op(h_curr_pos[ind], 1)
-            h_coords.append(tuple(h_curr_pos))
-            t_curr_pos = update_tail(h_curr_pos, t_curr_pos)
-            t_coords.append(tuple(t_curr_pos))
 
-            # print(
-            #     f"{dir}|{step}.{i} "
-            #     f"| h: {str(h_curr_pos):<8} "
-            #     f"t: {str(t_curr_pos):<8} "
-            #     f"d: {str([h_curr_pos[0] - t_curr_pos[0], h_curr_pos[1] - t_curr_pos[1]]):<8}"
-            # )
+            for i in range(len(rope)-1):
+                k_curr_pos = update_tail(rope[i], rope[i+1])
+                rope[i+1] = k_curr_pos
+            t_coords.append(tuple(rope[len(rope)-1]))
+    return len(set(t_coords))
 
-    print(len(set(t_coords)))
+
+if __name__ == "__main__":
+    with open("input") as f:
+        inf = f.read()
+
+    moves = inf.split("\n")
+
+    print(move(moves, 2))
+    print(move(moves, 10))

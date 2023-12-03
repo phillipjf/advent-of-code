@@ -1,6 +1,9 @@
-import re
 import argparse
 import logging
+import operator
+import functools
+
+
 from typing import List
 from dataclasses import dataclass, field
 
@@ -29,6 +32,16 @@ class Game:
     def valid(self):
         return all([d.valid() for d in self.draws])
 
+    def min(self) -> List[int]:
+        r = max([d.r for d in self.draws])
+        g = max([d.g for d in self.draws])
+        b = max([d.b for d in self.draws])
+        logging.debug([r, g, b])
+        return [r, g, b]
+
+    def power(self) -> int:
+        return functools.reduce(operator.mul, self.min(), 1)
+
 
 def parse(s: str) -> Game:
     game, draws = s.split(": ")
@@ -55,13 +68,17 @@ def main(part):
         inf: List[str] = f.readlines()
 
     possible = 0
+    power = 0
+
     for g in inf:
         game = parse(g)
-        logging.debug(f"{game}, {game.valid()}")
+        logging.debug(f"{game}, {game.min()}, {game.power()}, {game.valid()}")
         if game.valid():
             possible += game.id_num
+        power += game.power()
 
-    logging.info(f"Answer: {possible}")
+    logging.info(f"Part One Answer: {possible}")
+    logging.info(f"Part Two Answer: {power}")
 
 
 if __name__ == "__main__":

@@ -1,5 +1,7 @@
 import argparse
 import logging
+import operator
+import functools
 
 
 from typing import List
@@ -58,6 +60,7 @@ class PartNumber:
 class Symbol:
     coord: Coordinate
     value: str
+    adjacent_parts: List[PartNumber] = field(default_factory=list)
 
     def is_adjacent(self, span: List[Coordinate]) -> bool:
         adjacency = [c.is_adjacent(self.coord) for c in span]
@@ -109,22 +112,51 @@ def main(part):
     matrix = []
     for r in inf:
         matrix.append([_ for _ in r])
-    max_y = len(matrix)
-    max_x = len(matrix[0])
-    total_pn = 0
     logging.debug(matrix)
     schematic = parse(matrix)
     logging.debug(schematic)
-    for pn in schematic.part_numbers:
-        adjacents = pn.adjacent_symbol_range(max_x, max_y)
-        for c in adjacents:
-            adjacent_value = matrix[c.y][c.x]
-            if adjacent_value not in "1234567890.":
-                logging.debug(f"Part Number: {pn.value}, Adjacent: {adjacent_value}")
+
+    # Part 1
+    total_pn = 0
+    # # This is faster for just the total part numbers
+    # max_y = len(matrix)
+    # max_x = len(matrix[0])
+    # for pn in schematic.part_numbers:
+    #     adjacents = pn.adjacent_symbol_range(max_x, max_y)
+    #     for c in adjacents:
+    #         adjacent_value = matrix[c.y][c.x]
+    #         if adjacent_value not in "1234567890.":
+    #             logging.debug(f"Part Number: {pn.value}, Adjacent: {adjacent_value}")
+    #             total_pn += pn.value
+
+    # Part 2
+    gear_ratio = 0
+    for symbol in schematic.symbols:
+        # logging.debug(symbol)
+        for pn in schematic.part_numbers:
+            # logging.debug(pn)
+            logging.debug(
+                f"Checking symbol '{symbol.value}' "
+                f"({symbol.coord.x}, {symbol.coord.y}) "
+                f"adjacency to part number '{pn.value}' "
+                f"({pn.start.x}, {pn.start.y}), ({pn.end.x}, {pn.end.y}): "
+                # f"{symbol.is_adjacent(pn.span())}"
+            )
+            if symbol.is_adjacent(pn.span()):
+                symbol.adjacent_parts.append(pn)
                 total_pn += pn.value
+        logging.debug(f"Adjacent parts: ({symbol.value}): {symbol.adjacent_parts}")
+    for symbol in schematic.symbols:
+        if symbol.value != "*":
+            continue
+        if len(symbol.adjacent_parts) < 2:
+            continue
+        gear_ratio += functools.reduce(
+            operator.mul, [p.value for p in symbol.adjacent_parts], 1
+        )
 
     logging.info(f"Part One Answer: {total_pn}")
-    logging.info("Part Two Answer: ")
+    logging.info(f"Part Two Answer: {gear_ratio}")
 
 
 if __name__ == "__main__":

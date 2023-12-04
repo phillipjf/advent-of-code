@@ -1,10 +1,8 @@
 import argparse
 import logging
-import operator
-import functools
 
 
-from typing import List
+from typing import List, Tuple
 from dataclasses import dataclass, field
 
 
@@ -30,6 +28,20 @@ class Card:
                     score += score
         return score
 
+    def matching_numbers(self) -> int:
+        return len([n for n in self.numbers if n in self.winning_numbers])
+
+
+def winning_cards(cards: List[Card], match_range: Tuple[int, int], score: int) -> int:
+    for c in cards[match_range[0]:match_range[1]]:
+        match_count = c.matching_numbers()
+        ind = c.number
+        mr = (ind, ind+match_count)
+        cc = cards[mr[0]:mr[1]]
+        logging.debug(f"Card: {c.number}, Score: {score}, Match Count: {match_count}; {cc}")
+        score += winning_cards(cards, mr, match_count)
+    return score
+
 
 def main(part):
     with open("input") as f:
@@ -49,7 +61,9 @@ def main(part):
         score += card.score()
 
     logging.info(f"Part One Answer: {score}")
-    # logging.info("Part Two Answer: ")
+
+    w_cards = winning_cards(cards, (0, len(cards)), len(cards))
+    logging.info(f"Part Two Answer: {w_cards}")
 
 
 if __name__ == "__main__":

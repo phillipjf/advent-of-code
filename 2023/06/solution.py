@@ -39,6 +39,9 @@ def load_data(part) -> List[Race]:
 
     times: List[int] = [int(t) for t in inf[0].split(":")[1].split(" ") if t != ""]
     dists: List[int] = [int(d) for d in inf[1].split(":")[1].split(" ") if d != ""]
+    if part == 2:
+        times = [int("".join([str(t) for t in times]))]
+        dists = [int("".join([str(d) for d in dists]))]
     races = [Race(times[i], dists[i]) for i in range(len(times))]
     logging.debug(f"Times: {times}, Dists: {dists}, Races: {races}")
     return races
@@ -53,7 +56,7 @@ def main(part):
         logging.debug(f"{wins}")
     logging.debug(win_max)
     win_ways = functools.reduce(operator.mul, win_max, 1)
-    logging.info(f"Part One Answer: {win_ways}")
+    logging.info(f"Part {'One' if part ==1 else 'Two'} Answer: {win_ways}")
 
 
 if __name__ == "__main__":

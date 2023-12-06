@@ -43,24 +43,12 @@ class Lookup:
         offset = check_val - self.src
         return self.dst + offset
 
-    # def src_range(self):
-    #     return list(range(self.src, self.src + self.range))
-
-    # def dst_range(self):
-    #     return list(range(self.dst, self.dst + self.range))
-
 
 @dataclass
 class Map:
     src_type: str
     dst_type: str
     lookups: List[Lookup] = field(default_factory=list)
-
-    # def _lookup(self, lookup_value: int) -> int:
-    #     for lu in self.lookups:
-    #         if lookup_value in lu.src_range():
-    #             return lu.dst_range()[lu.src_range().index(lookup_value)]
-    #     return lookup_value
 
     def lookup(self, lookup_value: int) -> int:
         for lu in self.lookups:
@@ -72,6 +60,7 @@ class Map:
 @dataclass
 class Almanac:
     seeds: List[Seed] = field(default_factory=list)
+    seed_info: List[int] = field(default_factory=list)
     seed_to_soil_map: Optional[Map] = None
     soil_to_fertilizer_map: Optional[Map] = None
     fertilizer_to_water_map: Optional[Map] = None
@@ -92,7 +81,7 @@ class Almanac:
         ]
 
 
-def load_data() -> Almanac:
+def load_data(part) -> Almanac:
     with open("input") as f:
         inf: List[str] = f.read().splitlines()
 
@@ -100,7 +89,10 @@ def load_data() -> Almanac:
     curr_map = ""
     for rn, r in enumerate(inf):
         if rn == 0:
-            almanac.seeds = [Seed(int(s)) for s in r.split(": ")[1].split(" ")]
+            if part == 2:
+                almanac.seed_info = [int(s) for s in r.split(": ")[1].split(" ")]
+            else:
+                almanac.seeds = [Seed(int(s)) for s in r.split(": ")[1].split(" ")]
         elif r == "":
             continue
         elif " map:" in r:
@@ -117,19 +109,39 @@ def load_data() -> Almanac:
 
 
 def main(part):
-    almanac = load_data()
+    almanac = load_data(part)
     logging.debug(almanac)
 
-    for seed in almanac.seeds:
-        for map_type in almanac.maps():
-            lookup_map: Map = almanac.__getattribute__(map_type)
-            src_value = seed.__getattribute__(lookup_map.src_type)
-            dst_value = lookup_map.lookup(src_value)
-            seed.__setattr__(lookup_map.dst_type, dst_value)
-        logging.debug(f"Seed {seed}")
-    locs = sorted([s.location for s in almanac.seeds])[0]
-    logging.info(f"Part One Answer: {locs}")
-    # logging.info(f"Part Two Answer: {}")
+    if part == 1:
+        for seed in almanac.seeds:
+            for map_type in almanac.maps():
+                lookup_map: Map = almanac.__getattribute__(map_type)
+                src_value = seed.__getattribute__(lookup_map.src_type)
+                dst_value = lookup_map.lookup(src_value)
+                seed.__setattr__(lookup_map.dst_type, dst_value)
+            logging.debug(f"Seed {seed}")
+        locs = sorted([s.location for s in almanac.seeds])[0]
+        logging.info(f"Part One Answer: {locs}")
+
+    if part == 2:
+        locs = []
+        seed_info = almanac.seed_info
+        starts = seed_info[0::2]
+        lengths = seed_info[1::2]
+        for i in range(int(len(seed_info) / 2)):
+            start = starts[i]
+            end = start + lengths[i]
+            for s in range(start, end):
+                seed = Seed(s)
+                for map_type in almanac.maps():
+                    lookup_map: Map = almanac.__getattribute__(map_type)
+                    src_value = seed.__getattribute__(lookup_map.src_type)
+                    dst_value = lookup_map.lookup(src_value)
+                    seed.__setattr__(lookup_map.dst_type, dst_value)
+                logging.debug(f"Seed {seed}")
+                locs.append(seed.location)
+        close_loc = sorted(locs)[0]
+        logging.info(f"Part Two Answer: {close_loc}")
 
 
 if __name__ == "__main__":

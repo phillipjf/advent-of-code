@@ -2,6 +2,7 @@ import argparse
 import logging
 from typing import List, Dict
 from dataclasses import dataclass, field
+from functools import total_ordering
 
 
 logging.basicConfig(
@@ -13,6 +14,7 @@ logging.basicConfig(
 @dataclass
 class Card:
     label: str
+    part: int
 
     def __str__(self):
         return self.label
@@ -22,7 +24,7 @@ class Card:
             "A": 14,
             "K": 13,
             "Q": 12,
-            "J": 11,
+            "J": 11 if self.part == 1 else 1,
             "T": 10,
             "9": 9,
             "8": 8,
@@ -36,62 +38,108 @@ class Card:
         return scores[self.label]
 
 
+def two_unique(hand: str, unique: str, wildcard: bool) -> int:
+    if hand.count(unique[0]) == 4 or hand.count(unique[1]) == 4:
+        if wildcard and (hand.count("J") == 1 or hand.count("J") == 4):
+            # If Four of a Kind and the fifth is a wildcard,
+            # or vice-versa, best result is `Five of a Kind`
+            return 7
+        # Four of a Kind
+        return 6
+    if (hand.count(unique[0]) == 2 and hand.count(unique[1]) == 3) or (
+        hand.count(unique[1]) == 2 and hand.count(unique[0]) == 3
+    ):
+        if wildcard:
+            # If Full House and either set are a wildcard,
+            # best result is `Five of a Kind`
+            return 7
+        # Full House
+        return 5
+
+
+def three_unique(hand: str, unique: str, wildcard: bool) -> int:
+    if any(
+        [
+            hand.count(unique[0]) == 3,
+            hand.count(unique[1]) == 3,
+            hand.count(unique[2]) == 3,
+        ]
+    ):
+        if wildcard:
+            # If Three of a Kind and wildcard,
+            # the best result is `Four of a Kind`
+            return 6
+        # Three of a Kind
+        return 4
+    else:
+        if wildcard:
+            if hand.count("J") == 1:
+                # If Two Pair and one wildcard,
+                # the best result is `Full House`
+                return 5
+            else:
+                # If Two Pair and wildcard,
+                # the best result is `Four of a Kind`
+                return 6
+        # Two Pair
+        return 3
+
+
+@total_ordering
 @dataclass
 class Hand:
     cards: List[Card]
     bid: int
+    type: int = 0
     rank: int = 0
 
     def __str__(self) -> str:
         return "".join([c.label for c in self.cards])
 
-    def hand_type(self) -> int:
+    def hand_type(self, part=1) -> int:
         hand = str(self)
+        wildcard = ("J" in hand) and (part == 2)
         unique = "".join(set(hand))
-        logging.debug(f"Unique: {unique}")
+        logging.debug(f"Unique: {unique}, Wildcard: {wildcard}")
         if len(unique) == 1:
             # Five of a Kind
             return 7
         if len(unique) == 2:
-            if hand.count(unique[0]) == 4 or hand.count(unique[1]) == 4:
-                # Four of a Kind
-                return 6
-            if (hand.count(unique[0]) == 2 and hand.count(unique[1]) == 3) or (
-                hand.count(unique[1]) == 2 and hand.count(unique[0]) == 3
-            ):
-                # Full House
-                return 5
+            return two_unique(hand, unique, wildcard)
         if len(unique) == 3:
-            if any(
-                [
-                    hand.count(unique[0]) == 3,
-                    hand.count(unique[1]) == 3,
-                    hand.count(unique[2]) == 3,
-                ]
-            ):
-                # Three of a Kind
-                return 4
-            else:
-                # Two Pair
-                return 3
+            return three_unique(hand, unique, wildcard)
         if len(unique) == 4:
+            if wildcard:
+                # If one pair and a wildcard, the best result
+                # is `Three of a Kind`. The other possibility is
+                # `Two Pair`, but that's a lower value.
+                return 4
             # One pair
             return 2
         if len(unique) == 5:
+            if wildcard:
+                # If all are unique and a wildcard,
+                # the best result is `One Pair`
+                return 2
             return 1
         return 0
 
-    def compare(self, hand) -> int:
-        # Returns 1 if `hand`>self
-        # Returns -1 if `hand`<self
+    def __lt__(self, other):
         for i in range(5):
-            if self.cards[i].value() == hand.cards[i].value():
+            logging.debug(f"Comparing {self.cards[i]} to {other.cards[i]}")
+            if self.cards[i].value() == other.cards[i].value():
                 continue
-            if self.cards[i].value() > hand.cards[i].value():
-                return -1
-            if self.cards[i].value() < hand.cards[i].value():
-                return 1
-        return 0
+            if self.cards[i].value() < other.cards[i].value():
+                logging.debug(f"{str(self)} is less than {str(other)}")
+                return True
+            if self.cards[i].value() > other.cards[i].value():
+                logging.debug(f"{str(self)} is greater than {str(other)}")
+                return False
+
+    def __eq__(self, other):
+        eq = str(self) == str(other)
+        logging.debug(f"{str(self)} is {'not ' if eq else ''}equal to {str(other)}")
+        return eq
 
 
 @dataclass
@@ -99,40 +147,21 @@ class Game:
     hands: Dict[int, List[Hand]] = field(default_factory=dict)
 
     def sort(self):
-        i = 0
         for t, hands in self.hands.items():
-            sort_hands = []
-            for h in hands:
-                if len(sort_hands) == 0:
-                    logging.debug(f"Rank: {t}; First hand to sort...")
-                    sort_hands.append(h)
-                for i, hh in enumerate(sort_hands):
-                    if hh.compare(h) == -1:
-                        logging.debug(f"Rank: {t}; Hand {h} is less than {hh}")
-                        sort_hands.insert(i, h)
-                        break
-                    if hh.compare(h) == 1:
-                        logging.debug(f"Rank: {t}; Hand {h} is greater than {hh}")
-                        if i == len(sort_hands) - 1:
-                            logging.debug(f"Rank: {t}; Hand {h} is the largest hand")
-                            sort_hands.append(h)
-                            break
-                        else:
-                            continue
-                logging.debug(f"Rank: {t}; Sort hands looks like: {sort_hands}")
-            self.hands[t] = sort_hands
+            self.hands[t] = sorted(hands)
 
     def score(self) -> int:
-        h = []
+        rank = 1
         score = 0
         for i in range(8):
-            hands = self.hands.get(i, [])
-            logging.debug(f"Extending with {i} {hands}")
-            h.extend(hands)
-        logging.debug(f"Order of hands: {h}")
-        for i, hand in enumerate(h, 1):
-            logging.debug(f"Rank: {i}, Bid: {hand.bid}")
-            score += i * hand.bid
+            for hand in self.hands.get(i, []):
+                total = rank * hand.bid
+                score += total
+                logging.debug(
+                    f"Hand: {str(hand)} ({hand.type}), Rank: {rank}, "
+                    f"Bid: {hand.bid}, Total: {total}, Current score: {score}"
+                )
+                rank += 1
 
         return score
 
@@ -144,12 +173,12 @@ def load_data(part) -> Game:
     game = Game()
     for l in inf:
         cards, bid = l.split(" ")
-        h = Hand([Card(c) for c in cards], int(bid))
-        h_type = h.hand_type()
-        logging.debug(f"{h}, {h_type}")
-        if game.hands.get(h_type) is None:
-            game.hands[h_type] = []
-        game.hands[h_type].append(h)
+        h = Hand([Card(c, part) for c in cards], int(bid))
+        h.type = h.hand_type(part)
+        logging.debug(f"{h}, {h.type}")
+        if game.hands.get(h.type) is None:
+            game.hands[h.type] = []
+        game.hands[h.type].append(h)
 
     return game
 
@@ -160,7 +189,7 @@ def main(part):
     game.sort()
     logging.debug(f"{game}")
     score = game.score()
-    logging.info(f"Part One Answer: {score}")
+    logging.info(f"Part {'One' if part == 1 else 'Two'} Answer: {score}")
 
 
 if __name__ == "__main__":

@@ -33,20 +33,23 @@ def main(part):
         logging.debug(f"Processing: {r}")
         t_rows = calc(r, [])
         logging.debug(f"Total Rows: {t_rows}")
-        last_vals = []
+        vals = []
         for i in reversed(range(len(t_rows))):
-            r = t_rows[i][-1]
+            ind = -1 if part == 1 else 0
+            r = t_rows[i][ind]
             if i == len(t_rows) - 1:
-                last_vals.append(r)
+                vals.append(r)
                 continue
-            r_1 = last_vals[-1]
-            last_vals.append(r + r_1)
-            logging.debug(f"Val: {r}+{r_1}={r+r_1}")
-        logging.debug(f"Last Values: {last_vals}")
-        final.append(last_vals[-1])
+            r_1 = vals[-1]
+            new_val = r + r_1 if part == 1 else r - r_1
+            vals.append(new_val)
+            logging.debug(
+                f"Values: {vals}, Val: {r}{'+' if part ==1 else '-'}{r_1}={new_val}"
+            )
+        final.append(vals[-1])
     logging.debug(f"Finals: {final}")
 
-    logging.info(f"Part One Answer: {sum(final)}")
+    logging.info(f"Part {'One' if part ==1 else 'Two'} Answer: {sum(final)}")
 
 
 if __name__ == "__main__":

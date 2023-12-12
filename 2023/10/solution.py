@@ -97,7 +97,7 @@ class Map:
                     r_disp += t
                 else:
                     r_disp += "."
-            logging.debug(r_disp)
+            logging.info(r_disp)
 
 
 def main(part):
@@ -135,7 +135,7 @@ def main(part):
         else:
             curr_tile = next_tiles[0]
         path_len += 1
-    # pipe_map.print(explored)
+    pipe_map.print(explored)
     logging.info(f"Part one answer: {int(path_len/2)}")
 
 

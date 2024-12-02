@@ -78,4 +78,6 @@ So, for these example lists, the similarity score at the end of this process is 
 
 Once again consider your left and right lists. What is their similarity score?
 
-Answer:
+Your puzzle answer was 24349736.
+
+Both parts of this puzzle are complete! They provide two gold stars: \*\*

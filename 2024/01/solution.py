@@ -3,6 +3,7 @@ import argparse
 import logging
 from typing import List, Tuple
 from dataclasses import dataclass, field
+from collections import Counter
 
 
 logging.basicConfig(
@@ -22,14 +23,24 @@ def main(part: int):
         l, r = row.split()
         left.append(int(l))
         right.append(int(r))
-    left.sort()
-    right.sort()
 
-    sol: List[int] = []
-    for idx, loc in enumerate(left):
-        sol.append(abs(loc - right[idx]))
-    logging.info(sol)
-    result = sum(sol)
+    if part == 1:
+        left.sort()
+        right.sort()
+        sol: List[int] = []
+        for idx, loc in enumerate(left):
+            sol.append(abs(loc - right[idx]))
+        logging.debug(sol)
+        result = sum(sol)
+    else:
+        counter = Counter(right)
+        sol: List[int] = []
+        for loc in left:
+            occurrence = counter[loc]
+            sol.append(loc * occurrence)
+            logging.debug(f"Location '{loc}' occurs '{occurrence}' times.")
+        logging.debug(f"Occurrences: {sol}")
+        result = sum(sol)
 
     logging.info(f"Part {'One' if part == 1 else 'Two'} Answer: {result}")
 

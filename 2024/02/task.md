@@ -37,4 +37,6 @@ Analyze the unusual data from the engineers. How many reports are safe?
 
 To begin, get your puzzle input.
 
-Answer:
+Your puzzle answer was 686.
+
+The first half of this puzzle is complete! It provides one gold star: \*

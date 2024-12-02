@@ -42,4 +42,6 @@ Your actual left and right lists contain many location IDs. What is the total di
 
 To begin, get your puzzle input.
 
-Answer:
+Your puzzle answer was 1189304.
+
+The first half of this puzzle is complete! It provides one gold star: \*

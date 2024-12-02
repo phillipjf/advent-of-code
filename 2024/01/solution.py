@@ -1,3 +1,4 @@
+import bisect
 import argparse
 import logging
 from typing import List, Tuple
@@ -14,8 +15,21 @@ def main(part: int):
     with open("input") as f:
         inf: List[str] = f.read().splitlines()
 
-    result = inf
+    left: List[int] = []
+    right: List[int] = []
 
+    for row in inf:
+        l, r = row.split()
+        left.append(int(l))
+        right.append(int(r))
+    left.sort()
+    right.sort()
+
+    sol: List[int] = []
+    for idx, loc in enumerate(left):
+        sol.append(abs(loc - right[idx]))
+    logging.info(sol)
+    result = sum(sol)
 
     logging.info(f"Part {'One' if part == 1 else 'Two'} Answer: {result}")
 

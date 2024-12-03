@@ -20,4 +20,6 @@ Scan the corrupted memory for uncorrupted mul instructions. What do you get if y
 
 To begin, get your puzzle input.
 
-Answer:
+Your puzzle answer was 173419328.
+
+The first half of this puzzle is complete! It provides one gold star: \*

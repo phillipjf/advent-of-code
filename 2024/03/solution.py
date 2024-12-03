@@ -11,10 +11,7 @@ logging.basicConfig(
 )
 
 
-def main(part: int):
-    with open("input") as f:
-        inf: str = f.read()
-
+def product(inf: str) -> int:
     solution: int = 0
     pattern = re.compile(r"mul\((?P<op1>\d{1,3}),(?P<op2>\d{1,3})\)")
     matches: List[Tuple] = pattern.findall(inf)
@@ -23,7 +20,27 @@ def main(part: int):
         product: int = int(op1) * int(op2)
         logging.debug(f"Adding product of {op1}*{op2}={product}")
         solution += product
-    logging.info(f"Part {'One' if part ==1 else 'Two'} Answer: {solution}")
+    return solution
+
+
+def preprocess(inf: str) -> str:
+    final: List[str] = []
+    do: List[str] = inf.split("do()")
+    for d in do:
+        final.append(d.split("don't()")[0])
+    return "".join(final)
+
+
+def main(part: int):
+    with open("input") as f:
+        inf: str = f.read()
+
+    if part == 2:
+        inf = preprocess(inf)
+
+    solution = product(inf)
+
+    logging.info(f"Part {'One' if part == 1 else 'Two'} Answer: {solution}")
 
 
 if __name__ == "__main__":

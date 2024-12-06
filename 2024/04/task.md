@@ -42,4 +42,4 @@ Take a look at the little Elf's word search. How many times does XMAS appear?
 
 To begin, get your puzzle input.
 
-Answer:
+Your puzzle answer was 2575.

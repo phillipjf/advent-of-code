@@ -93,12 +93,58 @@ def search_word(word: str, inf: List[str]) -> int:
     return result
 
 
+def search_x(inf: List[str]) -> int:
+    result = 0
+    x_max = len(inf[0]) - 1
+    y_max = len(inf) - 1
+    nw = (-1, -1)
+    ne = (1, -1)
+    sw = (-1, 1)
+    se = (1, 1)
+    dirs = [nw, ne, sw, se]
+    coords = []
+    for y, row in enumerate(inf):
+        for x, col in enumerate(row):
+            if inf[y][x] == "A":
+                logging.debug(f"Found 'A' at ({x}, {y}).")
+                grid = []
+                grid_coords = [(x, y)]
+                for dir in dirs:
+                    xx = x + dir[0]
+                    yy = y + dir[1]
+                    if not is_valid_coordinate(xx, yy, x_max, y_max):
+                        logging.debug(f"Grid goes off puzzle at ({xx}, {yy}).")
+                        break
+                    grid.append(inf[yy][xx])
+                    grid_coords.append((xx, yy))
+                if len(grid) == 4:
+                    opts = ["MSMS", "SMSM", "MMSS", "SSMM"]
+                    if "".join(grid) in opts:
+                        logging.debug(f"Found valid grid: {grid}")
+                        result += 1
+                        coords.extend(grid_coords)
+    n_col = []
+    for y, row in enumerate(inf):
+        n_row = ""
+        for x, col in enumerate(row):
+            if (x, y) in coords:
+                n_row += col
+            else:
+                n_row += "."
+        n_col.append(n_row)
+    grid = "\n".join(n_col)
+    logging.debug(f"\n{grid}")
+    return result
+
+
 def main(part: int):
     with open("input") as f:
         inf: List[str] = f.read().splitlines()
     if part == 1:
         word = "XMAS"
         result = search_word(word, inf)
+    else:
+        result = search_x(inf)
     logging.info(f"Part {'One' if part ==1 else 'Two'} Answer: {result}")
 
 
